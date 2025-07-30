@@ -8,8 +8,8 @@
 		"Kimiram"
 	],
 	"contact": {
-		"homepage": "",
-		"sources": ""
+		"homepage": "https://modrinth.com/project/ONBe45It",
+		"sources": "https://github.com/K1miram/nbt-display"
 	},
 	"license": "MIT",
 	"icon": "assets/nbt-display/icon.png",
