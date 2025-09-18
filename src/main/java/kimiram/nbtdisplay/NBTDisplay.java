@@ -1,18 +1,20 @@
 package kimiram.nbtdisplay;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
-import net.fabricmc.fabric.impl.client.screen.ScreenEventFactory;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.component.ComponentChanges;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +29,19 @@ public class NBTDisplay implements ClientModInitializer {
             "key.nbt-display.show_nbt",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_CONTROL,
-            "key.category.nbt-display"
+            new KeyBinding.Category(Identifier.of(MOD_ID, "keybindings"))
     ));
 
 	@Override
 	public void onInitializeClient() {
 		ItemTooltipCallback.EVENT.register((stack, context, type, texts) -> {
-            if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), KeyBindingHelper.getBoundKeyOf(showNbtKeybind).getCode())) {
-                String raw = stack.toNbt(Objects.requireNonNull(context.getRegistryLookup())).toString();
+            if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), KeyBindingHelper.getBoundKeyOf(showNbtKeybind).getCode())) {
+                ComponentChanges changes = stack.getComponentChanges();
+                DataResult<NbtElement> result = ComponentChanges.CODEC.encodeStart(Objects.requireNonNull(context.getRegistryLookup()).getOps(NbtOps.INSTANCE), changes);
+                String raw = result.result().orElseThrow().toString();
+                if (Objects.equals(raw, "{}")) {
+                    raw = "";
+                }
                 String line = "";
                 int spaces = 0;
 
@@ -91,7 +98,9 @@ public class NBTDisplay implements ClientModInitializer {
                             line += chr;
                     }
                 }
-                texts.add(Text.literal(line));
+                if (!raw.isEmpty()) {
+                    texts.add(Text.literal(line));
+                }
             }
 		});
 	}
