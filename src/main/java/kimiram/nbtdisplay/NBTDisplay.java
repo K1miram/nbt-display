@@ -51,7 +51,7 @@ public class NBTDisplay implements ClientModInitializer {
                     switch (chr) {
                         case ':':
                             line += ":";
-                            if (!Character.isLetter(raw.charAt(i + 1))) {
+                            if (raw.charAt(i + 1) == '{' || raw.charAt(i + 1) == '[') {
                                 line += " ";
                             }
                             break;
