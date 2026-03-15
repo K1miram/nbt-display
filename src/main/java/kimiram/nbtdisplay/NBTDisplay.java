@@ -1,20 +1,18 @@
 package kimiram.nbtdisplay;
 
-import com.google.gson.JsonElement;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.serialization.DataResult;
-import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.nbt.NbtElement;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,20 +23,22 @@ public class NBTDisplay implements ClientModInitializer {
 	public static final String MOD_ID = "nbt-display";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final KeyBinding showNbtKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+    public static final KeyMapping showNbtKeybind = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.nbt-display.show_nbt",
-            InputUtil.Type.KEYSYM,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_CONTROL,
-            new KeyBinding.Category(Identifier.of(MOD_ID, "keybindings"))
+            new KeyMapping.Category(Identifier.fromNamespaceAndPath(MOD_ID, "keybindings"))
     ));
 
 	@Override
 	public void onInitializeClient() {
 		ItemTooltipCallback.EVENT.register((stack, context, type, texts) -> {
-            if (InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), KeyBindingHelper.getBoundKeyOf(showNbtKeybind).getCode())) {
-                ComponentChanges changes = stack.getComponentChanges();
-                DataResult<NbtElement> result = ComponentChanges.CODEC.encodeStart(Objects.requireNonNull(context.getRegistryLookup()).getOps(NbtOps.INSTANCE), changes);
-                String raw = result.result().orElseThrow().toString();
+            if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), KeyMappingHelper.getBoundKeyOf(showNbtKeybind).getValue())) {
+                DataComponentPatch patch = stack.getComponentsPatch();
+
+
+                DataResult<Tag> result = DataComponentPatch.CODEC.encodeStart(Objects.requireNonNull(context.registries()).createSerializationContext(NbtOps.INSTANCE), patch);
+                String raw = result.result().get().toString();
                 if (Objects.equals(raw, "{}")) {
                     raw = "";
                 }
@@ -57,7 +57,7 @@ public class NBTDisplay implements ClientModInitializer {
                             break;
                         case ',':
                             line += ",";
-                            texts.add(Text.literal(line));
+                            texts.add(Component.literal(line));
                             line = " ".repeat(spaces);
                             break;
                         case '{':
@@ -69,7 +69,7 @@ public class NBTDisplay implements ClientModInitializer {
 
                             line += "{";
                             spaces += 2;
-                            texts.add(Text.literal(line));
+                            texts.add(Component.literal(line));
                             line = " ".repeat(spaces);
                             break;
                         case '[':
@@ -81,16 +81,16 @@ public class NBTDisplay implements ClientModInitializer {
 
                             line += "[";
                             spaces += 2;
-                            texts.add(Text.literal(line));
+                            texts.add(Component.literal(line));
                             line = " ".repeat(spaces);
                             break;
                         case '}':
-                            texts.add(Text.literal(line));
+                            texts.add(Component.literal(line));
                             spaces -= 2;
                             line = " ".repeat(spaces) + "}";
                             break;
                         case ']':
-                            texts.add(Text.literal(line));
+                            texts.add(Component.literal(line));
                             spaces -= 2;
                             line = " ".repeat(spaces) + "]";
                             break;
@@ -99,7 +99,7 @@ public class NBTDisplay implements ClientModInitializer {
                     }
                 }
                 if (!raw.isEmpty()) {
-                    texts.add(Text.literal(line));
+                    texts.add(Component.literal(line));
                 }
             }
 		});
