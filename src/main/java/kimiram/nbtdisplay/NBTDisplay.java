@@ -7,13 +7,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,15 +23,15 @@ public class NBTDisplay implements ClientModInitializer {
 
     public static final KeyMapping showNbtKeybind = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.nbt-display.show_nbt",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_LEFT_CONTROL,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_LCONTROL,
             new KeyMapping.Category(Identifier.fromNamespaceAndPath(MOD_ID, "keybindings"))
     ));
 
 	@Override
 	public void onInitializeClient() {
 		ItemTooltipCallback.EVENT.register((stack, context, type, texts) -> {
-            if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), KeyMappingHelper.getBoundKeyOf(showNbtKeybind).getValue())) {
+            if (InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(showNbtKeybind).getValue())) {
                 DataComponentPatch patch = stack.getComponentsPatch();
 
 
